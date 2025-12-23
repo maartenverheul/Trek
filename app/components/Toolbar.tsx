@@ -5,7 +5,7 @@ import { useState } from "react";
 import { XIcon, MapIcon, LayersIcon } from "lucide-react";
 import MapSelector from "./MapSelector";
 
-export default function Sidebar() {
+export default function Toolbar() {
   const [activePanel, setActivePanel] = useState<"map" | "layers" | null>(null);
   const isOpen = activePanel !== null;
   const panelToShow = activePanel ?? "map";
