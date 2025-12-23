@@ -3,13 +3,17 @@
 import { MapContainer, Popup, TileLayer, GeoJSON, ZoomControl } from 'react-leaflet'
 import CustomMarker from './CustomMarker'
 import { MAP_TYPES, useMapSettings } from "../context/MapSettingsContext";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import type { FeatureCollection } from "geojson";
+import { getMarkersAction } from "@/app/actions/markers";
+import type { Marker as MarkerType } from "@/lib/types";
 
 export default function Map() {
   const { mapType } = useMapSettings();
   const cfg = MAP_TYPES[mapType];
   const [geojsonData, setGeojsonData] = useState<FeatureCollection[]>([]);
+  const [markers, setMarkers] = useState<MarkerType[]>([]);
+  const [isPending, startTransition] = useTransition();
   const markerColor = '#ff3b3b';
 
   useEffect(() => {
@@ -39,6 +43,23 @@ export default function Map() {
     };
   }, [mapType]);
 
+  // Load markers via server action — client side
+  useEffect(() => {
+    let cancelled = false;
+    startTransition(() => {
+      getMarkersAction()
+        .then(data => {
+          if (!cancelled) setMarkers(data);
+        })
+        .catch(() => {
+          if (!cancelled) setMarkers([]);
+        });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return <MapContainer className="h-full w-full" center={[52, 5]} zoom={10} zoomControl={false}>
     <TileLayer
       attribution={cfg.base.attribution}
@@ -57,10 +78,15 @@ export default function Map() {
       <GeoJSON key={`geojson-${idx}`} data={data} style={() => cfg.geojson![idx].style ?? {}} />
     ))}
     <ZoomControl position="bottomright" />
-    <CustomMarker position={[52, 5]} color={markerColor}>
-      <Popup>
-        A pretty CSS3 popup. <br /> Easily customizable.
-      </Popup>
-    </CustomMarker>
+    {markers.map((m) => (
+      <CustomMarker key={m.id} position={[m.lat, m.lng]} color={m.color ?? markerColor}>
+        <Popup>
+          <div className="space-y-1">
+            <div className="font-semibold">{m.title}</div>
+            {m.description && <div className="text-xs opacity-80">{m.description}</div>}
+          </div>
+        </Popup>
+      </CustomMarker>
+    ))}
   </MapContainer>
 }

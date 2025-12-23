@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Keep knex server-only and configure Turbopack
+  serverExternalPackages: ["knex"],
+  experimental: {
+    serverActions: {},
+  },
+  turbopack: {},
   images: {
     remotePatterns: [
       {
