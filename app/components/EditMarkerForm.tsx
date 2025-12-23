@@ -1,10 +1,13 @@
-import { Visitation, NewMarker, Marker } from "@/lib/types";
+import { Visitation, NewMarker, Marker, Category } from "@/lib/types";
 import { useState, useEffect } from "react";
 import { useFeatures } from "../context/FeaturesContext";
+import { useActiveMap } from "../context/ActiveMapContext";
+import { getCategoriesAction } from "@/app/actions";
 import VisitationEditor from "./VisitationEditor";
 
 export function EditMarkerForm({ marker, onSaved, onCancel, onDeleted }: { marker: Marker; onSaved?: () => void; onCancel?: () => void; onDeleted?: () => void; }) {
   const { updateMarker, deleteMarker } = useFeatures();
+  const { activeMap } = useActiveMap();
   const [title, setTitle] = useState<string>(marker.title);
   const [description, setDescription] = useState<string>(marker.description ?? "");
   const [country, setCountry] = useState<string>(marker.country ?? "");
@@ -18,6 +21,8 @@ export function EditMarkerForm({ marker, onSaved, onCancel, onDeleted }: { marke
   const [visitations, setVisitations] = useState<Visitation[]>(marker.visitations ?? []);
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryValue, setCategoryValue] = useState<string>(marker.categoryId != null ? String(marker.categoryId) : "");
 
   useEffect(() => {
     setTitle(marker.title);
@@ -31,7 +36,26 @@ export function EditMarkerForm({ marker, onSaved, onCancel, onDeleted }: { marke
     setNotes(marker.notes ?? "");
     setRating(marker.rating);
     setVisitations(marker.visitations ?? []);
+    setCategoryValue(marker.categoryId != null ? String(marker.categoryId) : "");
   }, [marker.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      if (!activeMap) {
+        setCategories([]);
+        return;
+      }
+      try {
+        const cats = await getCategoriesAction(activeMap.id);
+        if (!cancelled) setCategories(cats);
+      } catch {
+        if (!cancelled) setCategories([]);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [activeMap]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -44,7 +68,7 @@ export function EditMarkerForm({ marker, onSaved, onCancel, onDeleted }: { marke
         lat: marker.lat,
         lng: marker.lng,
         mapId: marker.mapId,
-        categoryId: marker.categoryId,
+        categoryId: categoryValue === "" ? undefined : Number(categoryValue),
         country: country || undefined,
         state: state || undefined,
         postal: postal || undefined,
@@ -89,6 +113,19 @@ export function EditMarkerForm({ marker, onSaved, onCancel, onDeleted }: { marke
           onChange={(e) => setTitle(e.target.value)}
           required
         />
+      </div>
+      <div>
+        <label className="text-xs mb-1 block text-white/80">Category</label>
+        <select
+          className="w-full rounded px-2 py-1 bg-black/40 border border-white/20 focus:border-white/60 outline-none"
+          value={categoryValue}
+          onChange={(e) => setCategoryValue(e.target.value)}
+        >
+          <option value="">Uncategorized</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>{c.title}</option>
+          ))}
+        </select>
       </div>
       <div>
         <label className="text-xs mb-1 block text-white/80">Description</label>

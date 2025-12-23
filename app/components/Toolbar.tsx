@@ -52,7 +52,7 @@ export default function Toolbar() {
       render: (close: () => void) => (
         <div className="w-full">
           <label className="text-sm mb-2 block">Features</label>
-          <FeaturesPanel onClose={close} />
+          <FeaturesPanel />
         </div>
       ),
     },

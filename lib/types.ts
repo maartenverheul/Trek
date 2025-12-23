@@ -25,7 +25,7 @@ export type Marker = {
   categoryColor?: string;
 };
 
-export type NewMarker = Omit<Marker, 'id' | 'categoryColor'>;
+export type NewMarker = Omit<Marker, 'id' | 'categoryColor'> & { categoryId?: number | null };
 
 export type User = {
   id: number;

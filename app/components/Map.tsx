@@ -190,7 +190,7 @@ export default function Map() {
       ))}
       <ZoomControl position="bottomright" />
       {markers.map((m) => (
-        <CustomMarker key={m.id} position={[m.lat, m.lng]} color={markerColor} title={m.title} onClick={() => startEdit(m.id)}>
+        <CustomMarker key={m.id} position={[m.lat, m.lng]} color={m.categoryColor ?? markerColor} title={m.title} onClick={() => startEdit(m.id)}>
           {/* <Popup>
             <div className="space-y-1">
               <div className="font-semibold">{m.title}</div>
