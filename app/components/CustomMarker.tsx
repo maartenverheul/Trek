@@ -20,6 +20,7 @@ type CustomMarkerProps = {
   fontSize?: number;
   extraWidth?: number;
   children?: React.ReactNode;
+  onClick?: () => void;
 };
 
 export default function CustomMarker({
@@ -35,6 +36,7 @@ export default function CustomMarker({
   textColor = '#ffffff',
   fontSize = 12,
   children,
+  onClick,
 }: CustomMarkerProps) {
   // When showing a title, elongate the square horizontally
   const squareWidth = 20;
@@ -57,7 +59,7 @@ export default function CustomMarker({
   ), [color, size, squareWidth, cornerRadius, pointerWidth, pointerHeight, dotColor, dotSize, pointerLeft, title, textColor, fontSize]);
 
   return (
-    <Marker position={position} icon={icon}>
+    <Marker position={position} icon={icon} eventHandlers={onClick ? { click: onClick } : undefined}>
       {children}
     </Marker>
   );

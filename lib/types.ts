@@ -1,13 +1,31 @@
+export type Visitation = { date: string; text: string };
+
 export type Marker = {
   id: number;
   title: string;
   lat: number;
   lng: number;
   description?: string;
-  color?: string;
+  mapId: number;
+  categoryId?: number;
+  // Address
+  country?: string;
+  state?: string;
+  postal?: string;
+  city?: string;
+  street?: string;
+  houseNumber?: string;
+  // Notes
+  notes: string;
+  // Rating 1-10
+  rating?: number;
+  // Visitations
+  visitations: Visitation[];
+  // Derived from category
+  categoryColor?: string;
 };
 
-export type NewMarker = Omit<Marker, 'id'>;
+export type NewMarker = Omit<Marker, 'id' | 'categoryColor'>;
 
 export type User = {
   id: number;
@@ -32,6 +50,7 @@ export type Category = {
   description?: string;
   color?: string;
   userId: number;
+  mapId: number;
 };
 
 export type NewCategory = Omit<Category, 'id'>;

@@ -8,9 +8,9 @@ export default function Home() {
 
 
   return (
-    <main className="w-screen h-screen overflow-hidden flex flex-col-reverse md:flex-row">
+    <main className="absolute left-0 top-0 w-screen h-screen overflow-hidden flex flex-col-reverse md:flex-row">
       <Toolbar />
-      <div className='grow bg-black h-full min-h-0'>
+      <div className='grow bg-black h-full w-full min-h-0'>
         <Map />
       </div>
 

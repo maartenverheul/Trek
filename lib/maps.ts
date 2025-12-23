@@ -55,3 +55,23 @@ export async function saveMap(m: NewMap): Promise<Map> {
 export async function deleteMap(id: number): Promise<void> {
   await knex("maps").where({ id }).delete();
 }
+
+export async function updateMap(id: number, m: Partial<Pick<NewMap, 'title' | 'description'>>): Promise<Map> {
+  const updateFields: Record<string, unknown> = {
+    updated_at: knex.fn.now(),
+  };
+  if (m.title !== undefined) updateFields.title = m.title;
+  if (m.description !== undefined) updateFields.description = m.description ?? null;
+
+  const updated = await knex("maps")
+    .where({ id })
+    .update(updateFields)
+    .returning(["id", "title", "description", "user_id"]);
+  const r = (updated as unknown as MapRow[])[0];
+  return {
+    id: r.id,
+    title: r.title,
+    description: r.description ?? undefined,
+    userId: r.user_id,
+  };
+}

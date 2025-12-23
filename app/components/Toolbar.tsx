@@ -4,11 +4,13 @@
 import { useState } from "react";
 import { XIcon, MapIcon, LayersIcon, MapPinIcon } from "lucide-react";
 import LayerSelector from "./LayerSelector";
+import MapSelector from "./MapSelector";
+import FeaturesPanel from "./FeaturesPanel";
 
 export default function Toolbar() {
   const [activePanel, setActivePanel] = useState<string | null>(null);
   const isOpen = activePanel !== null;
-  const DEFAULT_PANEL: "map" | "layers" = "map";
+  const DEFAULT_PANEL: string = "map";
   const panelToShow = activePanel ?? DEFAULT_PANEL;
 
   const PANELS = [
@@ -30,6 +32,16 @@ export default function Toolbar() {
       render: () => (
         <div className="w-full">
           <label className="text-sm mb-2 block">Maps</label>
+          <MapSelector onSelected={(m) => {
+            if (typeof window !== "undefined" && window.matchMedia) {
+              const isMobile = window.matchMedia("(max-width: 767px)").matches;
+              if (isMobile) {
+                setActivePanel(null);
+              } else {
+                setActivePanel("features");
+              }
+            }
+          }} />
         </div>
       ),
     },
@@ -37,9 +49,10 @@ export default function Toolbar() {
       id: "features" as const,
       label: "Features",
       icon: MapPinIcon,
-      render: () => (
+      render: (close: () => void) => (
         <div className="w-full">
           <label className="text-sm mb-2 block">Features</label>
+          <FeaturesPanel onClose={close} />
         </div>
       ),
     },
@@ -64,7 +77,7 @@ export default function Toolbar() {
             key={p.id}
             aria-label={p.label}
             title={p.label}
-            onClick={() => setActivePanel(ap => (ap === p.id ? null : p.id as "map" | "layers"))}
+            onClick={() => setActivePanel(ap => (ap === p.id ? null : p.id))}
             className={`p-2 rounded hover:bg-white/10 ${activePanel === p.id ? "bg-white/10" : ""}`}
           >
             <p.icon className="w-5 h-5" />

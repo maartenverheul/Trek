@@ -7,11 +7,12 @@ type CategoryRow = {
   description: string | null;
   color: string | null;
   user_id: number;
+  map_id: number;
 };
 
 export async function getCategories(): Promise<Category[]> {
   const rows = await knex("categories")
-    .select("id", "title", "description", "color", "user_id")
+    .select("id", "title", "description", "color", "user_id", "map_id")
     .orderBy("created_at", "desc");
   const typed = rows as unknown as CategoryRow[];
   return typed.map((r) => ({
@@ -20,13 +21,14 @@ export async function getCategories(): Promise<Category[]> {
     description: r.description ?? undefined,
     color: r.color ?? undefined,
     userId: r.user_id,
+    mapId: r.map_id,
   }));
 }
 
 export async function getCategoriesByUser(userId: string): Promise<Category[]> {
   const rows = await knex("categories")
     .where({ user_id: userId })
-    .select("id", "title", "description", "color", "user_id")
+    .select("id", "title", "description", "color", "user_id", "map_id")
     .orderBy("created_at", "desc");
   const typed = rows as unknown as CategoryRow[];
   return typed.map((r) => ({
@@ -35,6 +37,7 @@ export async function getCategoriesByUser(userId: string): Promise<Category[]> {
     description: r.description ?? undefined,
     color: r.color ?? undefined,
     userId: r.user_id,
+    mapId: r.map_id,
   }));
 }
 
@@ -45,8 +48,9 @@ export async function saveCategory(c: NewCategory): Promise<Category> {
       description: c.description ?? null,
       color: c.color ?? null,
       user_id: c.userId,
+      map_id: c.mapId,
     })
-    .returning(["id", "title", "description", "color", "user_id"]);
+    .returning(["id", "title", "description", "color", "user_id", "map_id"]);
   const r = (inserted as unknown as CategoryRow[])[0];
   return {
     id: r.id,
@@ -54,6 +58,7 @@ export async function saveCategory(c: NewCategory): Promise<Category> {
     description: r.description ?? undefined,
     color: r.color ?? undefined,
     userId: r.user_id,
+    mapId: r.map_id,
   };
 }
 
