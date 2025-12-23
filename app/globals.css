@@ -24,3 +24,14 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+button {
+  cursor: pointer;
+}
+
+/* Ensure Leaflet div-based markers have no white background */
+.leaflet-div-icon,
+.custom-square-marker {
+  background: transparent !important;
+  border: none !important;
+}
