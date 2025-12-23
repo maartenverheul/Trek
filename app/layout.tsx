@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
 import { MapSettingsProvider } from "./context/MapSettingsContext";
+import { FeaturesProvider } from "./context/FeaturesContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,7 +31,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <MapSettingsProvider>
-          {children}
+          <FeaturesProvider>
+            {children}
+          </FeaturesProvider>
         </MapSettingsProvider>
       </body>
     </html>

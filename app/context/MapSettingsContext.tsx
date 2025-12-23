@@ -30,7 +30,14 @@ export function useMapSettings() {
 
 export type TileSource = { url: string; attribution: string; subdomains?: string | string[] };
 export type GeoJsonOverlay = { url: string; style?: { color?: string; weight?: number; opacity?: number } };
-export type MapConfig = { label: string; base: TileSource; overlays?: TileSource[]; geojson?: GeoJsonOverlay[] };
+export type MapConfig = {
+  label: string;
+  base: TileSource;
+  overlays?: TileSource[];
+  geojson?: GeoJsonOverlay[];
+  // Highest native zoom level where imagery exists
+  maxNativeZoom: number;
+};
 
 export const MAP_TYPES: Record<MapType, MapConfig> = {
   osm: {
@@ -40,6 +47,7 @@ export const MAP_TYPES: Record<MapType, MapConfig> = {
       attribution: "&copy; OpenStreetMap contributors",
       subdomains: "abc",
     },
+    maxNativeZoom: 19,
   },
   voyager: {
     label: "CARTO Voyager",
@@ -48,6 +56,7 @@ export const MAP_TYPES: Record<MapType, MapConfig> = {
       attribution: "&copy; OpenStreetMap contributors &copy; CARTO",
       subdomains: "abcd",
     },
+    maxNativeZoom: 20,
   },
   satellite: {
     label: "Satellite",
@@ -56,6 +65,7 @@ export const MAP_TYPES: Record<MapType, MapConfig> = {
       attribution:
         "Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community",
     },
+    maxNativeZoom: 21,
   },
   hybrid: {
     label: "Satellite + labels",
@@ -77,5 +87,6 @@ export const MAP_TYPES: Record<MapType, MapConfig> = {
         style: { color: "#ffffff", weight: 1, opacity: 0.8 },
       },
     ],
+    maxNativeZoom: 21,
   },
 };
