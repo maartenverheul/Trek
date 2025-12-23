@@ -30,7 +30,7 @@ const OPTIONS: { type: MapType; label: string }[] = Object.entries(MAP_TYPES).ma
   label: v.label,
 }));
 
-export default function MapSelector({ onSelected }: { onSelected?: () => void }) {
+export default function LayerSelector({ onSelected }: { onSelected?: () => void }) {
   const { mapType, setMapType } = useMapSettings();
 
   return (
