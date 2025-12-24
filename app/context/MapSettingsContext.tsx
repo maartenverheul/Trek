@@ -8,6 +8,8 @@ export type MapType = string;
 type MapSettings = {
   mapType: MapType;
   setMapType: (type: MapType) => void;
+  alwaysShowLabels: boolean;
+  setAlwaysShowLabels: (val: boolean) => void;
 };
 
 const MapSettingsContext = createContext<MapSettings | undefined>(undefined);
@@ -16,8 +18,14 @@ export function MapSettingsProvider({ children }: { children: React.ReactNode })
   const [mapType, setMapType] = useLocalStorageState<MapType>("mapType", {
     defaultValue: "osm",
   });
+  const [alwaysShowLabels, setAlwaysShowLabels] = useLocalStorageState<boolean>("alwaysShowLabels", {
+    defaultValue: false,
+  });
 
-  const value = useMemo(() => ({ mapType, setMapType }), [mapType, setMapType]);
+  const value = useMemo(
+    () => ({ mapType, setMapType, alwaysShowLabels, setAlwaysShowLabels }),
+    [mapType, setMapType, alwaysShowLabels, setAlwaysShowLabels]
+  );
 
   return <MapSettingsContext.Provider value={value}>{children}</MapSettingsContext.Provider>;
 }

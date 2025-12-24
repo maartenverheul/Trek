@@ -11,13 +11,14 @@ import { useFeatures } from "../context/FeaturesContext";
 import { useActiveMap } from "../context/ActiveMapContext";
 
 export default function Map() {
-  const { mapType } = useMapSettings();
+  const { mapType, alwaysShowLabels } = useMapSettings();
   const cfg = MAP_TYPES[mapType];
   const [geojsonData, setGeojsonData] = useState<FeatureCollection[]>([]);
   const { markers, isLoading, startEdit } = useFeatures();
   const markerColor = '#888';
   const maxZoom = 21;
   const [showOverlay, setShowOverlay] = useState(false);
+  const [labelMarkerId, setLabelMarkerId] = useState<number | null>(null);
 
   useEffect(() => {
     if (isLoading) {
@@ -83,6 +84,18 @@ export default function Map() {
           visitations: []
         });
       },
+      click() {
+        // Clicking on the map (not a marker) clears marker label focus
+        setLabelMarkerId(null);
+      },
+      dragstart() {
+        // Panning the map removes label focus
+        setLabelMarkerId(null);
+      },
+      zoomstart() {
+        // Zooming removes label focus
+        setLabelMarkerId(null);
+      },
     });
 
     useEffect(() => {
@@ -101,6 +114,8 @@ export default function Map() {
         const latlng = map.containerPointToLatLng(startPoint);
         touchLat = latlng.lat;
         touchLng = latlng.lng;
+        // Any new touch interaction should clear current label focus
+        setLabelMarkerId(null);
         if (timerRef.current) window.clearTimeout(timerRef.current);
         timerRef.current = window.setTimeout(() => {
           if (touchLat != null && touchLng != null) {
@@ -140,6 +155,8 @@ export default function Map() {
           // Cancel long-press if finger moves too far
           startPoint = null;
           clearTimer();
+          // Also clear any active marker label when user pans
+          setLabelMarkerId(null);
         }
       };
       container.addEventListener('touchstart', onTouchStart, { passive: true });
@@ -182,7 +199,13 @@ export default function Map() {
       ))}
       <ZoomControl position="bottomright" />
       {markers.map((m) => (
-        <CustomMarker key={m.id} position={[m.lat, m.lng]} color={m.categoryColor ?? markerColor} title={m.title} onClick={() => startEdit(m.id)} />
+        <CustomMarker
+          key={m.id}
+          position={[m.lat, m.lng]}
+          color={m.categoryColor ?? markerColor}
+          title={alwaysShowLabels ? m.title : (labelMarkerId === m.id ? m.title : '')}
+          onClick={() => { setLabelMarkerId(m.id); startEdit(m.id); }}
+        />
       ))}
     </MapContainer>
     <div className={`absolute inset-0 z-1000 bg-black/40 transition-none duration-0 sm:transition-opacity sm:duration-300 ${showOverlay ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>

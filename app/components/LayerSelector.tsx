@@ -31,46 +31,57 @@ const OPTIONS: { type: MapType; label: string }[] = Object.entries(MAP_TYPES).ma
 }));
 
 export default function LayerSelector({ onSelected }: { onSelected?: () => void }) {
-  const { mapType, setMapType } = useMapSettings();
+  const { mapType, setMapType, alwaysShowLabels, setAlwaysShowLabels } = useMapSettings();
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-1 gap-3">
-      {OPTIONS.map((opt) => {
-        const baseUrl = buildBaseTileUrl(opt.type, PREVIEW);
-        const selected = mapType === opt.type;
-        return (
-          <button
-            key={opt.type}
-            onClick={() => {
-              setMapType(opt.type);
-              onSelected?.();
-            }}
-            aria-label={opt.label}
-            title={opt.label}
-            className={`group text-left rounded overflow-hidden border ${selected ? "border-white/70" : "border-white/20"
-              } hover:border-white/60 focus:outline-none focus:ring-2 focus:ring-white/40`}
-          >
-            <div className="relative w-full h-24 md:h-32">
-              <img
-                src={baseUrl}
-                alt={`${opt.label} preview tile`}
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-              {MAP_TYPES[opt.type].overlays?.map((ol, i) => (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 md:grid-cols-1 gap-3">
+        {OPTIONS.map((opt) => {
+          const baseUrl = buildBaseTileUrl(opt.type, PREVIEW);
+          const selected = mapType === opt.type;
+          return (
+            <button
+              key={opt.type}
+              onClick={() => {
+                setMapType(opt.type);
+                onSelected?.();
+              }}
+              aria-label={opt.label}
+              title={opt.label}
+              className={`group text-left rounded overflow-hidden border ${selected ? "border-white/70" : "border-white/20"
+                } hover:border-white/60 focus:outline-none focus:ring-2 focus:ring-white/40`}
+            >
+              <div className="relative w-full h-24 md:h-32">
                 <img
-                  key={`ol-${i}`}
-                  src={buildTileUrlFromSource(ol, PREVIEW)}
-                  alt={`${opt.label} overlay ${i}`}
-                  className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                  src={baseUrl}
+                  alt={`${opt.label} preview tile`}
+                  className="absolute inset-0 w-full h-full object-cover"
                 />
-              ))}
-            </div>
-            <div className="px-2 py-1 text-xs text-white/80 bg-black/40">
-              {opt.label}
-            </div>
-          </button>
-        );
-      })}
+                {MAP_TYPES[opt.type].overlays?.map((ol, i) => (
+                  <img
+                    key={`ol-${i}`}
+                    src={buildTileUrlFromSource(ol, PREVIEW)}
+                    alt={`${opt.label} overlay ${i}`}
+                    className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                  />
+                ))}
+              </div>
+              <div className="px-2 py-1 text-xs text-white/80 bg:black/40">
+                {opt.label}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+      <label className="flex items-center gap-2 text-xs text-white/80">
+        <input
+          type="checkbox"
+          className="h-4 w-4 rounded border border-white/30 bg-transparent"
+          checked={alwaysShowLabels}
+          onChange={(e) => setAlwaysShowLabels(e.target.checked)}
+        />
+        <span>Always show feature titles</span>
+      </label>
     </div>
   );
 }
