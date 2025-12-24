@@ -1,7 +1,7 @@
 "use client";
 
-import { MapContainer, Popup, TileLayer, GeoJSON, ZoomControl, useMapEvents } from 'react-leaflet'
 import { Point } from 'leaflet'
+import { MapContainer, TileLayer, GeoJSON, ZoomControl, useMapEvents } from 'react-leaflet'
 import type { LeafletMouseEvent } from 'leaflet'
 import CustomMarker from './CustomMarker'
 import { MAP_TYPES, useMapSettings } from "../context/MapSettingsContext";
@@ -83,47 +83,22 @@ export default function Map() {
           visitations: []
         });
       },
-      mousedown(e) {
-        const oe = (e as LeafletMouseEvent).originalEvent as Event | undefined;
-        if (oe instanceof PointerEvent && oe.pointerType === 'touch') return;
-        if (typeof TouchEvent !== 'undefined' && oe instanceof TouchEvent) return;
-        if (timerRef.current) window.clearTimeout(timerRef.current);
-        timerRef.current = window.setTimeout(() => {
-          if (!latestActiveMapRef.current) return;
-          void createMarker({
-            title: 'New Marker',
-            lat: e.latlng.lat,
-            lng: e.latlng.lng,
-            mapId: latestActiveMapRef.current.id,
-            notes: '',
-            visitations: []
-          });
-          if (timerRef.current) {
-            window.clearTimeout(timerRef.current);
-            timerRef.current = null;
-          }
-        }, LONG_PRESS_MS);
-      },
-      mouseup() {
-        if (timerRef.current) {
-          window.clearTimeout(timerRef.current);
-          timerRef.current = null;
-        }
-      },
-      // no-op for viewport bounds; showing all loaded markers
     });
 
     useEffect(() => {
       const container = map.getContainer();
       let touchLat: number | null = null;
       let touchLng: number | null = null;
+      const MOVE_TOLERANCE_PX = 15; // allow slight finger movement
+      let startPoint: Point | null = null;
       const onTouchStart = (ev: TouchEvent) => {
         if (!ev.touches || ev.touches.length !== 1) return;
         const touch = ev.touches[0];
         const rect = map.getContainer().getBoundingClientRect();
         const containerX = touch.clientX - rect.left;
         const containerY = touch.clientY - rect.top;
-        const latlng = map.containerPointToLatLng(new Point(containerX, containerY));
+        startPoint = new Point(containerX, containerY);
+        const latlng = map.containerPointToLatLng(startPoint);
         touchLat = latlng.lat;
         touchLng = latlng.lng;
         if (timerRef.current) window.clearTimeout(timerRef.current);
@@ -148,8 +123,25 @@ export default function Map() {
           timerRef.current = null;
         }
       };
-      const onTouchEnd = () => clearTimer();
-      const onTouchMove = () => clearTimer();
+      const onTouchEnd = () => {
+        startPoint = null;
+        clearTimer();
+      };
+      const onTouchMove = (ev: TouchEvent) => {
+        if (!startPoint || !ev.touches || ev.touches.length !== 1) return;
+        const touch = ev.touches[0];
+        const rect = map.getContainer().getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        const dx = x - startPoint.x;
+        const dy = y - startPoint.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > MOVE_TOLERANCE_PX) {
+          // Cancel long-press if finger moves too far
+          startPoint = null;
+          clearTimer();
+        }
+      };
       container.addEventListener('touchstart', onTouchStart, { passive: true });
       container.addEventListener('touchend', onTouchEnd, { passive: true });
       container.addEventListener('touchmove', onTouchMove, { passive: true });
@@ -190,14 +182,7 @@ export default function Map() {
       ))}
       <ZoomControl position="bottomright" />
       {markers.map((m) => (
-        <CustomMarker key={m.id} position={[m.lat, m.lng]} color={m.categoryColor ?? markerColor} title={m.title} onClick={() => startEdit(m.id)}>
-          {/* <Popup>
-            <div className="space-y-1">
-              <div className="font-semibold">{m.title}</div>
-              {m.description && <div className="text-xs opacity-80">{m.description}</div>}
-            </div>
-          </Popup> */}
-        </CustomMarker>
+        <CustomMarker key={m.id} position={[m.lat, m.lng]} color={m.categoryColor ?? markerColor} title={m.title} onClick={() => startEdit(m.id)} />
       ))}
     </MapContainer>
     <div className={`absolute inset-0 z-1000 bg-black/40 transition-none duration-0 sm:transition-opacity sm:duration-300 ${showOverlay ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
