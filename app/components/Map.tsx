@@ -5,7 +5,7 @@ import { MapContainer, TileLayer, GeoJSON, ZoomControl, useMapEvents } from 'rea
 import type { LeafletMouseEvent } from 'leaflet'
 import CustomMarker from './CustomMarker'
 import { MAP_TYPES, useMapSettings } from "../context/MapSettingsContext";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FeatureCollection } from "geojson";
 import { useFeatures } from "../context/FeaturesContext";
 import { useActiveMap } from "../context/ActiveMapContext";
@@ -18,7 +18,7 @@ export default function Map() {
   const { mapType, alwaysShowLabels } = useMapSettings();
   const cfg = MAP_TYPES[mapType];
   const [geojsonData, setGeojsonData] = useState<FeatureCollection[]>([]);
-  const { markers, isLoading, startEdit, createMarker, editingMarkerId } = useFeatures();
+  const { markers, isLoading, startEdit, editingMarkerId } = useFeatures();
   const { activeMap } = useActiveMap();
   const maxZoom = 21;
   const [showOverlay, setShowOverlay] = useState(false);
@@ -144,7 +144,7 @@ function MapInteractions() {
   const LONG_PRESS_MS = 600;
 
 
-  async function addNewMarker(mapId: number, lat: number, lng: number) {
+  const addNewMarker = useCallback(async (mapId: number, lat: number, lng: number) => {
     return createMarker({
       title: 'New Marker',
       lat,
@@ -153,7 +153,7 @@ function MapInteractions() {
       notes: '',
       visitations: []
     });
-  }
+  }, [createMarker]);
 
   useEffect(() => {
     latestActiveMapRef.current = activeMap;
@@ -232,7 +232,7 @@ function MapInteractions() {
       container.removeEventListener('touchend', onTouchEnd);
       container.removeEventListener('touchmove', onTouchMove);
     };
-  }, [map]);
+  }, [addNewMarker, map]);
 
   // no initial viewport handling needed
   return null;

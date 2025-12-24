@@ -6,22 +6,29 @@ import { XIcon, MapIcon, LayersIcon, MapPinIcon } from "lucide-react";
 import LayerSelector from "./LayerSelector";
 import MapSelector from "./MapSelector";
 import FeaturesPanel from "./FeaturesPanel";
+import { useFeatures } from "../context/FeaturesContext";
 
 export default function Toolbar() {
   const [activePanel, setActivePanel] = useState<string | null>(null);
-  const isOpen = activePanel !== null;
-  const DEFAULT_PANEL: string = "map";
-  const panelToShow = activePanel ?? DEFAULT_PANEL;
+  const DEFAULT_PANEL = "map";
+  const { editingMarkerId } = useFeatures();
+  const panelToShow = editingMarkerId != null ? "features" : (activePanel ?? DEFAULT_PANEL);
+  const isOpen = activePanel !== null || editingMarkerId != null;
+
+  function closeOverlay() {
+    if (!window.matchMedia("(max-width: 767px)").matches) return;
+    setActivePanel(null);
+  }
 
   const PANELS = [
     {
       id: "layers" as const,
       label: "Layers",
       icon: LayersIcon,
-      render: (close: () => void) => (
+      render: () => (
         <div className="w-full">
           <label className="text-sm mb-2 block">Map layer</label>
-          <LayerSelector onSelected={close} />
+          <LayerSelector onSelected={closeOverlay} />
         </div>
       ),
     },
@@ -32,15 +39,10 @@ export default function Toolbar() {
       render: () => (
         <div className="w-full">
           <label className="text-sm mb-2 block">Maps</label>
-          <MapSelector onSelected={(m) => {
-            if (typeof window !== "undefined" && window.matchMedia) {
-              const isMobile = window.matchMedia("(max-width: 767px)").matches;
-              if (isMobile) {
-                setActivePanel(null);
-              } else {
-                setActivePanel("features");
-              }
-            }
+          <MapSelector onSelected={() => {
+            const isMobile = window.matchMedia("(max-width: 767px)").matches;
+            if (isMobile) closeOverlay();
+            else setActivePanel("features");
           }} />
         </div>
       ),
@@ -49,7 +51,7 @@ export default function Toolbar() {
       id: "features" as const,
       label: "Features",
       icon: MapPinIcon,
-      render: (close: () => void) => (
+      render: () => (
         <div className="w-full">
           <label className="text-sm mb-2 block">Features</label>
           <FeaturesPanel />
@@ -58,15 +60,9 @@ export default function Toolbar() {
     },
   ];
 
-  // Fast lookup for selected panel without repeated array scans
-  const panelMap = Object.fromEntries(PANELS.map(p => [p.id, p])) as Record<string, (typeof PANELS)[number]>;
-  const selectedPanel = panelMap[panelToShow] ?? panelMap[DEFAULT_PANEL];
+  // Fast lookup removed as it wasn't used
 
-  function closeOverlay() {
-    if (typeof window !== "undefined" && window.matchMedia && window.matchMedia("(max-width: 767px)").matches) {
-      setActivePanel(null);
-    }
-  }
+
 
   return (
     <div className="text-white bg-black flex md:flex-row flex-row w-full md:w-auto h-min py-2 md:h-full">
@@ -111,7 +107,7 @@ export default function Toolbar() {
               key={`panel-${p.id}`}
               className={`${panelToShow === p.id ? "block" : "hidden"}`}
             >
-              {p.render(closeOverlay)}
+              {p.render()}
             </div>
           ))}
         </div>
