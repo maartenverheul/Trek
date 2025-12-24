@@ -73,7 +73,7 @@ export default function CategoryItem({ cat, markers, startEdit, setFocus, editab
           />
         </div>
       ) : (
-        <div className="text-xs text-white/70 font-semibold mb-1 flex items-center justify-between relative">
+        <div className="text-xs text-white/70 font-semibold mb-2 flex items-center justify-between relative">
           <div className="flex items-center gap-2">
             {cat.color && (
               <span className="inline-block w-3 h-3 rounded-sm" style={{ background: cat.color }} />
@@ -122,20 +122,22 @@ export default function CategoryItem({ cat, markers, startEdit, setFocus, editab
           {markers.map((m) => (
             <li key={m.id}>
               <div
-                className="w-full rounded border px-2 py-2 border-white/20 hover:border-white/60 cursor-pointer group"
+                className="w-full rounded border  px-1 py-1 border-white/20 hover:border-white/60 cursor-pointer group"
                 onClick={() => startEdit(m.id)}
                 title={m.description ?? m.title}
                 aria-label={`Edit ${m.title}`}
               >
-                <div className="flex items-start gap-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-white flex items-center gap-2">
-                      <span className="inline-block w-3 h-3 rounded-sm" style={{ background: cat.color }} />
-                      <span className="truncate">{m.title}</span>
+                <div className="flex items-start">
+                  <div className="flex-1 flex flex-row gap-1 items-start min-w-0">
+                    <div className="p-0.5">
+                      <div className="w-3 h-3 rounded-sm" style={{ background: cat.color }} />
                     </div>
-                    {m.description && (
-                      <div className="text-xs text-white/70 line-clamp-2">{m.description}</div>
-                    )}
+                    <div className="text-xs flex-col font-medium text-white gap-2">
+                      <span className="truncate">{m.title}</span>
+                      {m.description && (
+                        <div className="text-xs text-white/70 line-clamp-2">{m.description}</div>
+                      )}
+                    </div>
                   </div>
                   <button
                     type="button"

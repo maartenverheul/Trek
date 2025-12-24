@@ -11,13 +11,22 @@ export default function CategoryAdd() {
   const [adding, setAdding] = useState(false);
   const [savingCat, setSavingCat] = useState(false);
   const [catError, setCatError] = useState<string | null>(null);
+  const [seedColor, setSeedColor] = useState<string>("#8888ff");
+
+  function randomHexColor() {
+    const n = Math.floor(Math.random() * 0xffffff);
+    return `#${n.toString(16).padStart(6, '0')}`;
+  }
 
   if (!adding) {
     return (
       <button
         type="button"
         className="w-full rounded border border-white/20 hover:border-white/60 px-2 py-2 text-left text-xs text-white/80"
-        onClick={() => setAdding(true)}
+        onClick={() => {
+          setSeedColor(randomHexColor());
+          setAdding(true);
+        }}
       >
         + Add category
       </button>
@@ -27,7 +36,7 @@ export default function CategoryAdd() {
   return (
     <CategoryForm
       initialTitle=""
-      initialColor="#8888ff"
+      initialColor={seedColor}
       saving={savingCat || !activeMap}
       error={catError}
       onSubmit={async ({ title, color }) => {
