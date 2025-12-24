@@ -92,7 +92,7 @@ export default function CategoryItem({ cat, markers, startEdit, setFocus, editab
                 ⋮
               </button>
               {menuOpen && (
-                <div className="absolute right-0 top-full mt-1 w-40 rounded border border-white/20 bg-black/80 shadow-lg z-10">
+                <div className="absolute right-0 top-full mt-1 w-40 rounded border border-white/20 bg-black shadow-lg shadow-white/10 z-10">
                   <button
                     type="button"
                     className="w-full text-left px-3 py-2 hover:bg-white/10 text-white/90"
