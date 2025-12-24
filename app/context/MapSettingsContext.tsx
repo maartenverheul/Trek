@@ -91,7 +91,7 @@ export const MAP_TYPES: Record<MapType, MapConfig> = {
     ],
     geojson: [
       {
-        url: "https://geojson.xyz/naturalearth-3.3.0/ne_50m_admin_0_boundary_lines_land.geojson",
+        url: "/geojson/country_borders_compressed.geojson",
         style: { color: "#ffffff", weight: 1, opacity: 0.8 },
       },
     ],
