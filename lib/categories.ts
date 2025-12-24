@@ -105,6 +105,38 @@ export async function saveCategory(c: NewCategory): Promise<Category> {
   };
 }
 
+export async function updateCategory(
+  id: number,
+  c: Partial<Pick<NewCategory, 'title' | 'description' | 'color'>>
+): Promise<Category> {
+  const updateFields: Record<string, unknown> = {
+    updated_at: knex.fn.now(),
+  };
+  if (c.title !== undefined) updateFields.title = c.title;
+  if (c.description !== undefined) updateFields.description = c.description ?? null;
+  if (c.color !== undefined) updateFields.color = c.color ?? null;
+
+  const updated = await knex('categories')
+    .where({ id })
+    .update(updateFields)
+    .returning(['id', 'title', 'description', 'color', 'map_id']);
+  const rBasic = (updated as unknown as Omit<CategoryRow, 'user_id'>[])[0];
+  const mapRow = await knex('maps').select('user_id').where({ id: rBasic.map_id }).first();
+  const user_id = (mapRow as { user_id: number } | undefined)?.user_id ?? 0;
+  const r = { ...rBasic, user_id } as CategoryRow;
+  return {
+    id: r.id,
+    title: r.title,
+    description: r.description ?? undefined,
+    color: r.color ?? undefined,
+    userId: r.user_id,
+    mapId: r.map_id,
+  };
+}
+
 export async function deleteCategory(id: number): Promise<void> {
-  await knex("categories").where({ id }).delete();
+  await knex.transaction(async (trx) => {
+    await trx("markers").where({ category_id: id }).delete();
+    await trx("categories").where({ id }).delete();
+  });
 }

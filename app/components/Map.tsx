@@ -8,40 +8,23 @@ import { MAP_TYPES, useMapSettings } from "../context/MapSettingsContext";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FeatureCollection } from "geojson";
 import { useFeatures } from "../context/FeaturesContext";
-import { useActiveMap } from "../context/ActiveMapContext";
-import { getCategoriesAction } from "@/app/actions";
-import type { Category, Marker } from "@/lib/types";
+// ActiveMap not needed here for categories; features handle markers
+import type { Marker } from "@/lib/types";
 import { DEFAULT_MARKER_COLOR } from "@/lib/constants";
 import { useMapViewport } from "../context/MapViewportContext";
+import { useActiveMap } from "../context/ActiveMapContext";
+import { useCategories } from "../context/CategoriesContext";
 
 export default function Map() {
   const { mapType, alwaysShowLabels } = useMapSettings();
   const cfg = MAP_TYPES[mapType];
   const [geojsonData, setGeojsonData] = useState<FeatureCollection[]>([]);
   const { markers, isLoading, startEdit, editingMarkerId } = useFeatures();
-  const { activeMap } = useActiveMap();
   const maxZoom = 21;
   const [showOverlay, setShowOverlay] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const { categories } = useCategories();
 
-  // Load categories for current map to derive marker colors
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      if (!activeMap) {
-        setCategories([]);
-        return;
-      }
-      try {
-        const cats = await getCategoriesAction(activeMap.id);
-        if (!cancelled) setCategories(cats);
-      } catch {
-        if (!cancelled) setCategories([]);
-      }
-    }
-    load();
-    return () => { cancelled = true; };
-  }, [activeMap]);
+  // Categories come from shared context; no event bridging required
 
   const catColorById = useMemo(() => {
     const m = new globalThis.Map<number, string>();

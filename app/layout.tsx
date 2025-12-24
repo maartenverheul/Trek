@@ -4,6 +4,7 @@ import "./globals.css";
 import "leaflet/dist/leaflet.css";
 import { MapSettingsProvider } from "./context/MapSettingsContext";
 import { FeaturesProvider } from "./context/FeaturesContext";
+import { CategoriesProvider } from "./context/CategoriesContext";
 import { ActiveMapProvider } from "./context/ActiveMapContext";
 import { MapViewportProvider } from "./context/MapViewportContext";
 
@@ -34,11 +35,13 @@ export default function RootLayout({
       >
         <MapSettingsProvider>
           <ActiveMapProvider>
-            <FeaturesProvider>
-              <MapViewportProvider>
-                {children}
-              </MapViewportProvider>
-            </FeaturesProvider>
+            <CategoriesProvider>
+              <FeaturesProvider>
+                <MapViewportProvider>
+                  {children}
+                </MapViewportProvider>
+              </FeaturesProvider>
+            </CategoriesProvider>
           </ActiveMapProvider>
         </MapSettingsProvider>
       </body>

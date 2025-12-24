@@ -4,7 +4,7 @@ import { getMaps, deleteMap, updateMap, saveMap } from "@/lib/maps";
 import { getMarkers, saveMarker, deleteMarker, updateMarker } from "../../lib/markers";
 import type { Map, Marker, NewMap, NewMarker } from "../../lib/types";
 import { removeSession, setSession } from "../session";
-import { getCategoriesByMap, saveCategory } from "@/lib/categories";
+import { getCategoriesByMap, saveCategory, updateCategory, deleteCategory } from "@/lib/categories";
 import type { Category, NewCategory } from "@/lib/types";
 
 export async function signIn(username: string) {
@@ -54,4 +54,15 @@ export async function getCategoriesAction(mapId: number): Promise<Category[]> {
 
 export async function saveCategoryAction(c: NewCategory): Promise<Category> {
   return saveCategory(c);
+}
+
+export async function updateCategoryAction(
+  id: number,
+  c: Partial<Pick<NewCategory, 'title' | 'description' | 'color'>>
+): Promise<Category> {
+  return updateCategory(id, c);
+}
+
+export async function deleteCategoryAction(id: number): Promise<void> {
+  return deleteCategory(id);
 }
