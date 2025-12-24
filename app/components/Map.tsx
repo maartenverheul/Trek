@@ -5,20 +5,51 @@ import { MapContainer, TileLayer, GeoJSON, ZoomControl, useMapEvents } from 'rea
 import type { LeafletMouseEvent } from 'leaflet'
 import CustomMarker from './CustomMarker'
 import { MAP_TYPES, useMapSettings } from "../context/MapSettingsContext";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { FeatureCollection } from "geojson";
 import { useFeatures } from "../context/FeaturesContext";
 import { useActiveMap } from "../context/ActiveMapContext";
+import { getCategoriesAction } from "@/app/actions";
+import type { Category, Marker } from "@/lib/types";
+import { DEFAULT_MARKER_COLOR } from "@/lib/constants";
 
 export default function Map() {
   const { mapType, alwaysShowLabels } = useMapSettings();
   const cfg = MAP_TYPES[mapType];
   const [geojsonData, setGeojsonData] = useState<FeatureCollection[]>([]);
   const { markers, isLoading, startEdit } = useFeatures();
-  const markerColor = '#888';
+  const { activeMap } = useActiveMap();
   const maxZoom = 21;
   const [showOverlay, setShowOverlay] = useState(false);
   const [labelMarkerId, setLabelMarkerId] = useState<number | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  // Load categories for current map to derive marker colors
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      if (!activeMap) {
+        setCategories([]);
+        return;
+      }
+      try {
+        const cats = await getCategoriesAction(activeMap.id);
+        if (!cancelled) setCategories(cats);
+      } catch {
+        if (!cancelled) setCategories([]);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [activeMap]);
+
+  const catColorById = useMemo(() => {
+    const m = new globalThis.Map<number, string>();
+    for (const c of categories) {
+      m.set(c.id, c.color ?? DEFAULT_MARKER_COLOR);
+    }
+    return m;
+  }, [categories]);
 
   useEffect(() => {
     if (isLoading) {
@@ -56,7 +87,10 @@ export default function Map() {
     };
   }, [mapType, cfg.geojson]);
 
-  // Markers now provided by FeaturesContext
+  function onMarkerClick(m: Marker) {
+    setLabelMarkerId(m.id);
+    startEdit(m.id);
+  }
 
   function MapInteractions() {
     const { createMarker } = useFeatures();
@@ -202,9 +236,9 @@ export default function Map() {
         <CustomMarker
           key={m.id}
           position={[m.lat, m.lng]}
-          color={m.categoryColor ?? markerColor}
-          title={alwaysShowLabels ? m.title : (labelMarkerId === m.id ? m.title : '')}
-          onClick={() => { setLabelMarkerId(m.id); startEdit(m.id); }}
+          color={catColorById.get(m.categoryId ?? 0) ?? DEFAULT_MARKER_COLOR}
+          title={alwaysShowLabels || labelMarkerId === m.id ? m.title : ''}
+          onClick={() => onMarkerClick(m)}
         />
       ))}
     </MapContainer>

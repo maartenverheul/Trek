@@ -18,7 +18,6 @@ type MarkerRow = {
   notes: string | null;
   rating: number | null;
   visitations: unknown | null;
-  categoryColor?: string | null;
 };
 
 // Round to 6 decimal places to normalize persisted coordinates
@@ -28,7 +27,6 @@ function roundCoordinate(n: number): number {
 
 export async function getMarkers(mapId?: number): Promise<Marker[]> {
   const query = knex('markers')
-    .leftJoin('categories', 'markers.category_id', 'categories.id')
     .select(
       'markers.id as id',
       'markers.title as title',
@@ -45,8 +43,7 @@ export async function getMarkers(mapId?: number): Promise<Marker[]> {
       'markers.house_number as houseNumber',
       'markers.notes as notes',
       'markers.rating as rating',
-      'markers.visitations as visitations',
-      'categories.color as categoryColor'
+      'markers.visitations as visitations'
     )
     .orderBy('markers.created_at', 'desc');
   if (typeof mapId === 'number') {
@@ -71,7 +68,6 @@ export async function getMarkers(mapId?: number): Promise<Marker[]> {
     notes: r.notes ?? '',
     rating: r.rating ?? undefined,
     visitations: Array.isArray(r.visitations) ? (r.visitations as Visitation[]) : [],
-    categoryColor: r.categoryColor ?? undefined,
   }));
 }
 

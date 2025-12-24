@@ -186,7 +186,7 @@ export default function FeaturesPanel() {
                       aria-label={`Edit ${m.title}`}
                     >
                       <div className="text-sm font-medium text-white flex items-center gap-2">
-                        <span className="inline-block w-3 h-3 rounded-sm" style={{ background: m.categoryColor ?? '#ff3b3b' }} />
+                        <span className="inline-block w-3 h-3 rounded-sm" style={{ background: cat.color }} />
                         {m.title}
                       </div>
                       {m.description && (
@@ -216,7 +216,7 @@ export default function FeaturesPanel() {
                   aria-label={`Edit ${m.title}`}
                 >
                   <div className="text-sm font-medium text-white flex items-center gap-2">
-                    <span className="inline-block w-3 h-3 rounded-sm" style={{ background: m.categoryColor ?? '#ff3b3b' }} />
+                    <span className="inline-block w-3 h-3 rounded-sm" style={{ background: '#888' }} />
                     {m.title}
                   </div>
                   {m.description && (

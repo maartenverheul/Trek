@@ -6,7 +6,7 @@ import { useMemo } from 'react';
 
 type CustomMarkerProps = {
   position: LatLngExpression;
-  color?: string;
+  color: string;
   size?: number;
   cornerRadius?: number;
   pointerWidth?: number;
@@ -25,7 +25,7 @@ type CustomMarkerProps = {
 
 export default function CustomMarker({
   position,
-  color = '#ff3b3b',
+  color,
   size = 18,
   cornerRadius = 6,
   pointerWidth = 10,

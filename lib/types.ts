@@ -21,11 +21,9 @@ export type Marker = {
   rating?: number;
   // Visitations
   visitations: Visitation[];
-  // Derived from category
-  categoryColor?: string;
 };
 
-export type NewMarker = Omit<Marker, 'id' | 'categoryColor'> & { categoryId?: number | null };
+export type NewMarker = Omit<Marker, 'id'> & { categoryId?: number | null };
 
 export type User = {
   id: number;
