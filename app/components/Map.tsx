@@ -107,6 +107,7 @@ export default function Map() {
           position={[m.lat, m.lng]}
           color={catColorById.get(m.categoryId ?? 0) ?? DEFAULT_MARKER_COLOR}
           title={alwaysShowLabels || editingMarkerId === m.id ? m.title : ''}
+          zIndexOffset={editingMarkerId === m.id ? 10000 : 0}
           onClick={() => onMarkerClick(m)}
         />
       ))}
