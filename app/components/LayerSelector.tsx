@@ -1,7 +1,7 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { MapType, MAP_TYPES, useMapSettings, TileSource } from "../context/MapSettingsContext";
-import Image from "next/image";
 
 type PreviewTile = { x: number; y: number; z: number };
 
@@ -51,23 +51,17 @@ export default function LayerSelector({ onSelected }: { onSelected?: () => void 
               } hover:border-white/60 focus:outline-none focus:ring-2 focus:ring-white/40`}
           >
             <div className="relative w-full h-24 md:h-32">
-              <Image
+              <img
                 src={baseUrl}
                 alt={`${opt.label} preview tile`}
-                fill
-                sizes="(min-width: 768px) 256px, 50vw"
-                className="object-cover"
-                priority={false}
+                className="absolute inset-0 w-full h-full object-cover"
               />
               {MAP_TYPES[opt.type].overlays?.map((ol, i) => (
-                <Image
+                <img
                   key={`ol-${i}`}
                   src={buildTileUrlFromSource(ol, PREVIEW)}
                   alt={`${opt.label} overlay ${i}`}
-                  fill
-                  sizes="(min-width: 768px) 256px, 50vw"
-                  className="object-cover pointer-events-none"
-                  priority={false}
+                  className="absolute inset-0 w-full h-full object-cover pointer-events-none"
                 />
               ))}
             </div>
