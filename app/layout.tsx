@@ -5,6 +5,7 @@ import "leaflet/dist/leaflet.css";
 import { MapSettingsProvider } from "./context/MapSettingsContext";
 import { FeaturesProvider } from "./context/FeaturesContext";
 import { ActiveMapProvider } from "./context/ActiveMapContext";
+import { MapViewportProvider } from "./context/MapViewportContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,7 +35,9 @@ export default function RootLayout({
         <MapSettingsProvider>
           <ActiveMapProvider>
             <FeaturesProvider>
-              {children}
+              <MapViewportProvider>
+                {children}
+              </MapViewportProvider>
             </FeaturesProvider>
           </ActiveMapProvider>
         </MapSettingsProvider>

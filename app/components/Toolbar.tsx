@@ -104,7 +104,17 @@ export default function Toolbar() {
         >
           <XIcon className="w-5 h-5" />
         </button>
-        {selectedPanel.render(closeOverlay)}
+        {/* Keep all panels mounted to preserve state and avoid refetch flicker */}
+        <div className="w-full">
+          {PANELS.map((p) => (
+            <div
+              key={`panel-${p.id}`}
+              className={`${panelToShow === p.id ? "block" : "hidden"}`}
+            >
+              {p.render(closeOverlay)}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

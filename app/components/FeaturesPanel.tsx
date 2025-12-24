@@ -6,10 +6,13 @@ import { useEffect, useMemo, useState } from "react";
 import { useActiveMap } from "../context/ActiveMapContext";
 import { getCategoriesAction, saveCategoryAction } from "@/app/actions";
 import type { Category } from "@/lib/types";
+import { EyeIcon } from "lucide-react";
+import { useMapViewport } from "../context/MapViewportContext";
 
 export default function FeaturesPanel() {
   const { markers, isLoading, editingMarker, startEdit, stopEdit } = useFeatures();
   const { activeMap } = useActiveMap();
+  const { setFocus } = useMapViewport();
   const [categories, setCategories] = useState<Category[]>([]);
   const [adding, setAdding] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -179,20 +182,36 @@ export default function FeaturesPanel() {
               <ul className="space-y-2">
                 {list.map((m) => (
                   <li key={m.id}>
-                    <button
-                      className="w-full text-left rounded border px-2 py-2 border-white/20 hover:border-white/60"
+                    <div
+                      className="w-full rounded border px-2 py-2 border-white/20 hover:border-white/60 cursor-pointer group"
                       onClick={() => startEdit(m.id)}
                       title={m.description ?? m.title}
                       aria-label={`Edit ${m.title}`}
                     >
-                      <div className="text-sm font-medium text-white flex items-center gap-2">
-                        <span className="inline-block w-3 h-3 rounded-sm" style={{ background: cat.color }} />
-                        {m.title}
+                      <div className="flex items-start gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-white flex items-center gap-2">
+                            <span className="inline-block w-3 h-3 rounded-sm" style={{ background: cat.color }} />
+                            <span className="truncate">{m.title}</span>
+                          </div>
+                          {m.description && (
+                            <div className="text-xs text-white/70 line-clamp-2">{m.description}</div>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          className="p-1 text-white/80 hover:text-white shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                          title={`View ${m.title}`}
+                          aria-label={`View ${m.title}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setFocus({ lat: m.lat, lng: m.lng, zoom: 16 });
+                          }}
+                        >
+                          <EyeIcon className="w-4 h-4" />
+                        </button>
                       </div>
-                      {m.description && (
-                        <div className="text-xs text-white/70 line-clamp-2">{m.description}</div>
-                      )}
-                    </button>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -209,20 +228,36 @@ export default function FeaturesPanel() {
           <ul className="space-y-2">
             {uncategorized.map((m) => (
               <li key={m.id}>
-                <button
-                  className="w-full text-left rounded border px-2 py-2 border-white/20 hover:border-white/60"
+                <div
+                  className="w-full rounded border px-2 py-2 border-white/20 hover:border-white/60 cursor-pointer group"
                   onClick={() => startEdit(m.id)}
                   title={m.description ?? m.title}
                   aria-label={`Edit ${m.title}`}
                 >
-                  <div className="text-sm font-medium text-white flex items-center gap-2">
-                    <span className="inline-block w-3 h-3 rounded-sm" style={{ background: '#888' }} />
-                    {m.title}
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-white flex items-center gap-2">
+                        <span className="inline-block w-3 h-3 rounded-sm" style={{ background: '#888' }} />
+                        <span className="truncate">{m.title}</span>
+                      </div>
+                      {m.description && (
+                        <div className="text-xs text-white/70 line-clamp-2">{m.description}</div>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      className="p-1 text-white/40 hover:text-white shrink-0 opacity-0 group-hover:opacity-100"
+                      title={`View ${m.title}`}
+                      aria-label={`View ${m.title}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setFocus({ lat: m.lat, lng: m.lng, zoom: 16 });
+                      }}
+                    >
+                      <EyeIcon className="w-4 h-4" />
+                    </button>
                   </div>
-                  {m.description && (
-                    <div className="text-xs text-white/70 line-clamp-2">{m.description}</div>
-                  )}
-                </button>
+                </div>
               </li>
             ))}
           </ul>

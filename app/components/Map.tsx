@@ -12,16 +12,16 @@ import { useActiveMap } from "../context/ActiveMapContext";
 import { getCategoriesAction } from "@/app/actions";
 import type { Category, Marker } from "@/lib/types";
 import { DEFAULT_MARKER_COLOR } from "@/lib/constants";
+import { useMapViewport } from "../context/MapViewportContext";
 
 export default function Map() {
   const { mapType, alwaysShowLabels } = useMapSettings();
   const cfg = MAP_TYPES[mapType];
   const [geojsonData, setGeojsonData] = useState<FeatureCollection[]>([]);
-  const { markers, isLoading, startEdit } = useFeatures();
+  const { markers, isLoading, startEdit, createMarker, editingMarkerId } = useFeatures();
   const { activeMap } = useActiveMap();
   const maxZoom = 21;
   const [showOverlay, setShowOverlay] = useState(false);
-  const [labelMarkerId, setLabelMarkerId] = useState<number | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
 
   // Load categories for current map to derive marker colors
@@ -53,7 +53,8 @@ export default function Map() {
 
   useEffect(() => {
     if (isLoading) {
-      setShowOverlay(true);
+      const t = window.setTimeout(() => setShowOverlay(true), 0);
+      return () => window.clearTimeout(t);
     } else {
       const t = window.setTimeout(() => setShowOverlay(false), 250);
       return () => window.clearTimeout(t);
@@ -88,128 +89,13 @@ export default function Map() {
   }, [mapType, cfg.geojson]);
 
   function onMarkerClick(m: Marker) {
-    setLabelMarkerId(m.id);
     startEdit(m.id);
-  }
-
-  function MapInteractions() {
-    const { createMarker } = useFeatures();
-    const { activeMap } = useActiveMap();
-    const timerRef = useRef<number | null>(null);
-    const latestActiveMapRef = useRef(activeMap);
-    const LONG_PRESS_MS = 600;
-
-    useEffect(() => {
-      latestActiveMapRef.current = activeMap;
-    }, [activeMap]);
-
-    const map = useMapEvents({
-      contextmenu(e) {
-        const oe = (e as LeafletMouseEvent).originalEvent as Event | undefined;
-        if (oe instanceof PointerEvent && oe.pointerType === 'touch') return;
-        if (typeof TouchEvent !== 'undefined' && oe instanceof TouchEvent) return;
-        if (!latestActiveMapRef.current) return;
-        void createMarker({
-          title: 'New Marker',
-          lat: e.latlng.lat,
-          lng: e.latlng.lng,
-          mapId: latestActiveMapRef.current.id,
-          notes: '',
-          visitations: []
-        });
-      },
-      click() {
-        // Clicking on the map (not a marker) clears marker label focus
-        setLabelMarkerId(null);
-      },
-      dragstart() {
-        // Panning the map removes label focus
-        setLabelMarkerId(null);
-      },
-      zoomstart() {
-        // Zooming removes label focus
-        setLabelMarkerId(null);
-      },
-    });
-
-    useEffect(() => {
-      const container = map.getContainer();
-      let touchLat: number | null = null;
-      let touchLng: number | null = null;
-      const MOVE_TOLERANCE_PX = 15; // allow slight finger movement
-      let startPoint: Point | null = null;
-      const onTouchStart = (ev: TouchEvent) => {
-        if (!ev.touches || ev.touches.length !== 1) return;
-        const touch = ev.touches[0];
-        const rect = map.getContainer().getBoundingClientRect();
-        const containerX = touch.clientX - rect.left;
-        const containerY = touch.clientY - rect.top;
-        startPoint = new Point(containerX, containerY);
-        const latlng = map.containerPointToLatLng(startPoint);
-        touchLat = latlng.lat;
-        touchLng = latlng.lng;
-        // Any new touch interaction should clear current label focus
-        setLabelMarkerId(null);
-        if (timerRef.current) window.clearTimeout(timerRef.current);
-        timerRef.current = window.setTimeout(() => {
-          if (touchLat != null && touchLng != null) {
-            if (!latestActiveMapRef.current) return;
-            void createMarker({
-              title: 'New Marker', lat: touchLat, lng: touchLng, mapId: latestActiveMapRef.current.id,
-              notes: '',
-              visitations: []
-            });
-          }
-          if (timerRef.current) {
-            window.clearTimeout(timerRef.current);
-            timerRef.current = null;
-          }
-        }, LONG_PRESS_MS);
-      };
-      const clearTimer = () => {
-        if (timerRef.current) {
-          window.clearTimeout(timerRef.current);
-          timerRef.current = null;
-        }
-      };
-      const onTouchEnd = () => {
-        startPoint = null;
-        clearTimer();
-      };
-      const onTouchMove = (ev: TouchEvent) => {
-        if (!startPoint || !ev.touches || ev.touches.length !== 1) return;
-        const touch = ev.touches[0];
-        const rect = map.getContainer().getBoundingClientRect();
-        const x = touch.clientX - rect.left;
-        const y = touch.clientY - rect.top;
-        const dx = x - startPoint.x;
-        const dy = y - startPoint.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist > MOVE_TOLERANCE_PX) {
-          // Cancel long-press if finger moves too far
-          startPoint = null;
-          clearTimer();
-          // Also clear any active marker label when user pans
-          setLabelMarkerId(null);
-        }
-      };
-      container.addEventListener('touchstart', onTouchStart, { passive: true });
-      container.addEventListener('touchend', onTouchEnd, { passive: true });
-      container.addEventListener('touchmove', onTouchMove, { passive: true });
-      return () => {
-        container.removeEventListener('touchstart', onTouchStart);
-        container.removeEventListener('touchend', onTouchEnd);
-        container.removeEventListener('touchmove', onTouchMove);
-      };
-    }, [map, createMarker]);
-
-    // no initial viewport handling needed
-    return null;
   }
 
   return <div data-maxzoom={cfg.maxNativeZoom} className='w-full h-full relative' aria-busy={showOverlay}>
     <MapContainer className="h-full w-full relative z-0" center={[52, 5]} zoom={10} zoomControl={false} maxZoom={maxZoom}>
       <MapInteractions />
+      <ViewportController />
       <TileLayer
         key={`base-${cfg.maxNativeZoom}-${cfg.base.url}`}
         attribution={cfg.base.attribution}
@@ -237,7 +123,7 @@ export default function Map() {
           key={m.id}
           position={[m.lat, m.lng]}
           color={catColorById.get(m.categoryId ?? 0) ?? DEFAULT_MARKER_COLOR}
-          title={alwaysShowLabels || labelMarkerId === m.id ? m.title : ''}
+          title={alwaysShowLabels || editingMarkerId === m.id ? m.title : ''}
           onClick={() => onMarkerClick(m)}
         />
       ))}
@@ -248,4 +134,120 @@ export default function Map() {
       </div>
     </div>
   </div>
+}
+
+function MapInteractions() {
+  const { createMarker } = useFeatures();
+  const { activeMap } = useActiveMap();
+  const timerRef = useRef<number | null>(null);
+  const latestActiveMapRef = useRef(activeMap);
+  const LONG_PRESS_MS = 600;
+
+
+  async function addNewMarker(mapId: number, lat: number, lng: number) {
+    return createMarker({
+      title: 'New Marker',
+      lat,
+      lng,
+      mapId,
+      notes: '',
+      visitations: []
+    });
+  }
+
+  useEffect(() => {
+    latestActiveMapRef.current = activeMap;
+  }, [activeMap]);
+
+  const map = useMapEvents({
+    contextmenu(e) {
+      const oe = (e as LeafletMouseEvent).originalEvent as Event | undefined;
+      if (oe instanceof PointerEvent && oe.pointerType === 'touch') return;
+      if (typeof TouchEvent !== 'undefined' && oe instanceof TouchEvent) return;
+      if (!latestActiveMapRef.current) return;
+      void addNewMarker(latestActiveMapRef.current.id, e.latlng.lat, e.latlng.lng);
+    },
+  });
+
+  useEffect(() => {
+    const container = map.getContainer();
+    let touchLat: number | null = null;
+    let touchLng: number | null = null;
+    const MOVE_TOLERANCE_PX = 15; // allow slight finger movement
+    let startPoint: Point | null = null;
+    const onTouchStart = (ev: TouchEvent) => {
+      if (!ev.touches || ev.touches.length !== 1) return;
+      const touch = ev.touches[0];
+      const rect = map.getContainer().getBoundingClientRect();
+      const containerX = touch.clientX - rect.left;
+      const containerY = touch.clientY - rect.top;
+      startPoint = new Point(containerX, containerY);
+      const latlng = map.containerPointToLatLng(startPoint);
+      touchLat = latlng.lat;
+      touchLng = latlng.lng;
+      // Any new touch interaction
+      if (timerRef.current) window.clearTimeout(timerRef.current);
+      timerRef.current = window.setTimeout(() => {
+        if (touchLat != null && touchLng != null) {
+          if (!latestActiveMapRef.current) return;
+          void addNewMarker(latestActiveMapRef.current.id, touchLat, touchLng);
+        }
+        if (timerRef.current) {
+          window.clearTimeout(timerRef.current);
+          timerRef.current = null;
+        }
+      }, LONG_PRESS_MS);
+    };
+    const clearTimer = () => {
+      if (timerRef.current) {
+        window.clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+    const onTouchEnd = () => {
+      startPoint = null;
+      clearTimer();
+    };
+    const onTouchMove = (ev: TouchEvent) => {
+      if (!startPoint || !ev.touches || ev.touches.length !== 1) return;
+      const touch = ev.touches[0];
+      const rect = map.getContainer().getBoundingClientRect();
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+      const dx = x - startPoint.x;
+      const dy = y - startPoint.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > MOVE_TOLERANCE_PX) {
+        // Cancel long-press if finger moves too far
+        startPoint = null;
+        clearTimer();
+        // User is panning; cancel long-press
+      }
+    };
+    container.addEventListener('touchstart', onTouchStart, { passive: true });
+    container.addEventListener('touchend', onTouchEnd, { passive: true });
+    container.addEventListener('touchmove', onTouchMove, { passive: true });
+    return () => {
+      container.removeEventListener('touchstart', onTouchStart);
+      container.removeEventListener('touchend', onTouchEnd);
+      container.removeEventListener('touchmove', onTouchMove);
+    };
+  }, [map]);
+
+  // no initial viewport handling needed
+  return null;
+}
+
+function ViewportController() {
+  const map = useMapEvents({});
+  const { focus, setFocus } = useMapViewport();
+
+  useEffect(() => {
+    if (!focus) return;
+    const targetZoom = Math.max(map.getZoom(), focus.zoom ?? 16);
+    map.flyTo([focus.lat, focus.lng], targetZoom, { duration: 1 });
+    setFocus(null);
+  }, [focus, map, setFocus]);
+
+  return null;
 }
